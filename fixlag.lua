@@ -1,26 +1,52 @@
 -- | Services | --
 local Lighting = game:GetService("Lighting")
-local player = game:GetService("Players").LocalPlayer
 local terrain = workspace.Terrain
+local players = game:GetService("Players")
+local local_player = players.LocalPlayer
 
 -- | Hide Effect | --
-local function hideEffect(v)
-    if v:IsA("Trail") or v:IsA("ParticleEmitter") then
-        v.Transparency = NumberSequence.new(1)
+local function safe_connect(signal, callback)
+    local success, connection = pcall(function()
+        return signal:Connect(callback)
+    end)
+
+    return success and connection or nil
+end
+
+local function is_effect(instance)
+    return instance:IsA("Trail") or instance:IsA("ParticleEmitter")
+end
+
+local function recolor_effect(effect)
+    if effect:IsA("Trail") then
+        effect.Color = ColorSequence.new(Color3.fromRGB(0, 85, 190))
+        effect.Texture = ""
+        effect.LightEmission = 0.8
+    elseif effect:IsA("ParticleEmitter") then
+        effect.Color = ColorSequence.new(Color3.fromRGB(0, 85, 190))
+        effect.LightEmission = 1
     end
 end
 
-local function hookCharacter(character)
-    for _, v in ipairs(character:GetDescendants()) do
-        hideEffect(v)
+local function hook_character(character)
+    for _, descendant in ipairs(character:GetDescendants()) do
+        if is_effect(descendant) then
+            recolor_effect(descendant)
+        end
     end
-    character.DescendantAdded:Connect(hideEffect)
+
+    safe_connect(character.DescendantAdded, function(descendant)
+        if is_effect(descendant) then
+            recolor_effect(descendant)
+        end
+    end)
 end
 
-if player.Character then
-    hookCharacter(player.Character)
+if local_player.Character then
+    hook_character(local_player.Character)
 end
-player.CharacterAdded:Connect(hookCharacter)
+
+safe_connect(local_player.CharacterAdded, hook_character)
 
 -- | Custom Atmosphere | --
 local function flattenSky(sky)
