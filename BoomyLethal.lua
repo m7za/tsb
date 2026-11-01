@@ -1,5 +1,4 @@
--- | Boomy Lethal By vux | --
-local GUI_URL = "https://raw.githubusercontent.com/m7za/tsb/refs/heads/main/BoomyLethalGui.lua"
+-- | Boomy Lethal by VUX | --
 -- | Services | --
 local userInputService = game:GetService("UserInputService")
 local runService = game:GetService("RunService")
@@ -322,6 +321,7 @@ localPlayer.CharacterAdded:Connect(setupCharacter)
 
 -- | Load GUI | --
 local success, result = pcall(function()
+    local GUI_URL = "https://raw.githubusercontent.com/m7za/tsb/refs/heads/main/BoomyLethalGui.lua"
     local buildGui = loadstring(game:HttpGet(GUI_URL))()
     return buildGui(settings)
 end)
