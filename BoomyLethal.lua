@@ -1,6 +1,5 @@
--- | Boomy Lethal By VuX | --
-local GUI_URL = ""
-
+-- | Boomy Lethal By vux | --
+local GUI_URL = "https://raw.githubusercontent.com/m7za/tsb/refs/heads/main/BoomyLethalGui.lua"
 -- | Services | --
 local userInputService = game:GetService("UserInputService")
 local runService = game:GetService("RunService")
