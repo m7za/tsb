@@ -1,4 +1,6 @@
--- | Boomy Lethal by VUX | --
+-- Boommy Lethal Core
+local GUI_URL = "
+
 -- | Services | --
 local userInputService = game:GetService("UserInputService")
 local runService = game:GetService("RunService")
@@ -21,7 +23,8 @@ local settings = {
     enabled = true,
     lethalEnabled = true,
     lethalAnimationId = "rbxassetid://12296113986",
-    lethalDelay = 1.64,
+    lethalDashDelay = 1.64,
+    lethalJumpDelay = 1.80,
     lethalJumpVelocity = 54,
     lethalAccuracy = 7,
     lethalCancelDelay = 0.389,
@@ -30,8 +33,8 @@ local settings = {
     noClipEnabled = true,
     dashRange = 7,
     camSmooth = true,
-    camSmoothDelay = 0.2,
-    camDuration = 1.7
+    camSmoothDelay = 0,
+    camDuration = 1.5
 }
 
 -- | Camera Smooth | --
@@ -208,19 +211,29 @@ local function setupCharacter(character)
             return
         end
 
-        task.wait(settings.lethalDelay)
+        -- both delays count from the moment the animation starts
+        local dashDelay = settings.lethalDashDelay
+        local jumpDelay = settings.lethalJumpDelay
+
+        -- jump runs on its own timer
+        task.delay(jumpDelay, function()
+            if not isScriptActive or not settings.enabled then return end
+            if not rootPart.Parent then return end
+
+            local currentVelocity = rootPart.AssemblyLinearVelocity
+            rootPart.AssemblyLinearVelocity = Vector3.new(currentVelocity.X, settings.lethalJumpVelocity, currentVelocity.Z)
+
+            local bodyVelocity = Instance.new("BodyVelocity")
+            bodyVelocity.Velocity = Vector3.new(0, settings.lethalJumpVelocity, 0)
+            bodyVelocity.MaxForce = Vector3.new(0, 1e8, 0)
+            bodyVelocity.P = 1500
+            bodyVelocity.Parent = rootPart
+            debrisService:AddItem(bodyVelocity, 0.1)
+        end)
+
+        -- dash after its own delay
+        task.wait(dashDelay)
         if not isScriptActive then return end
-
-        -- Launch upward
-        local currentVelocity = rootPart.AssemblyLinearVelocity
-        rootPart.AssemblyLinearVelocity = Vector3.new(currentVelocity.X, settings.lethalJumpVelocity, currentVelocity.Z)
-
-        local bodyVelocity = Instance.new("BodyVelocity")
-        bodyVelocity.Velocity = Vector3.new(0, settings.lethalJumpVelocity, 0)
-        bodyVelocity.MaxForce = Vector3.new(0, 1e8, 0)
-        bodyVelocity.P = 1500
-        bodyVelocity.Parent = rootPart
-        debrisService:AddItem(bodyVelocity, 0.1)
 
         isNoclipping = true
         onDashStart()
@@ -321,7 +334,6 @@ localPlayer.CharacterAdded:Connect(setupCharacter)
 
 -- | Load GUI | --
 local success, result = pcall(function()
-    local GUI_URL = "https://raw.githubusercontent.com/m7za/tsb/refs/heads/main/BoomyLethalGui.lua"
     local buildGui = loadstring(game:HttpGet(GUI_URL))()
     return buildGui(settings)
 end)
