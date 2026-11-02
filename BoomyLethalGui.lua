@@ -5,9 +5,14 @@ return function(settings)
     local http_service = game:GetService("HttpService")
 
     local gui_name = "boommy_lethal"
-    local window_width = 264
-    local top_bar_height = 38
-    local body_padding = 12
+    local window_width = 320
+    local top_bar_height = 34
+    local body_padding = 10
+    local body_gap = 8
+    local cell_height = 40
+    local cell_gap = 6
+    local gui_scale = 0.8
+    local max_height_ratio = 0.7
 
     local config_folder = "lethal.Techinified"
     local config_path = config_folder .. "/configs"
@@ -87,13 +92,18 @@ return function(settings)
     main_frame.Name = "main"
     main_frame.Active = true
     main_frame.Size = UDim2.new(0, window_width, 0, top_bar_height)
-    main_frame.Position = UDim2.new(0.5, -window_width / 2, 0.2, 0)
+    main_frame.AnchorPoint = Vector2.new(0.5, 0)
+    main_frame.Position = UDim2.new(0.5, 0, 0, 8)
     main_frame.BackgroundColor3 = theme.background
     main_frame.BorderSizePixel = 0
     main_frame.ClipsDescendants = true
     main_frame.Parent = screen_gui
     round(main_frame, 12)
     outline(main_frame, theme.outline, 1)
+
+    local window_scale = Instance.new("UIScale")
+    window_scale.Scale = gui_scale
+    window_scale.Parent = main_frame
 
     -- top bar
     local top_bar = Instance.new("Frame")
@@ -104,20 +114,24 @@ return function(settings)
 
     local accent_dot = Instance.new("Frame")
     accent_dot.Size = UDim2.new(0, 8, 0, 8)
-    accent_dot.Position = UDim2.new(0, 14, 0.5, -4)
+    accent_dot.Position = UDim2.new(0, 12, 0.5, -4)
     accent_dot.BackgroundColor3 = theme.accent
     accent_dot.BorderSizePixel = 0
     accent_dot.Parent = top_bar
     round(accent_dot, 4)
 
-    local title_label = make_label(top_bar, "boommy lethal", 14, theme.text, Enum.Font.GothamBold)
-    title_label.Size = UDim2.new(0, 120, 1, 0)
-    title_label.Position = UDim2.new(0, 30, 0, 0)
+    local title_label = make_label(top_bar, "boommy lethal", 13, theme.text, Enum.Font.GothamBold)
+    title_label.Size = UDim2.new(0, 104, 1, 0)
+    title_label.Position = UDim2.new(0, 26, 0, 0)
 
-    local status_label = make_label(top_bar, "on", 12, theme.accent, Enum.Font.GothamMedium)
-    status_label.Size = UDim2.new(0, 40, 1, 0)
-    status_label.Position = UDim2.new(1, -80, 0, 0)
-    status_label.TextXAlignment = Enum.TextXAlignment.Right
+    local tab_segment = Instance.new("Frame")
+    tab_segment.Size = UDim2.new(0, 100, 0, 22)
+    tab_segment.Position = UDim2.new(0, 134, 0.5, -11)
+    tab_segment.BackgroundColor3 = theme.panel
+    tab_segment.BorderSizePixel = 0
+    tab_segment.Parent = top_bar
+    round(tab_segment, 7)
+    outline(tab_segment, theme.outline, 1)
 
     local collapse_button = Instance.new("TextButton")
     collapse_button.AutoButtonColor = false
@@ -127,10 +141,10 @@ return function(settings)
     collapse_button.TextColor3 = theme.muted
     collapse_button.BackgroundColor3 = theme.panel
     collapse_button.BorderSizePixel = 0
-    collapse_button.Size = UDim2.new(0, 26, 0, 26)
-    collapse_button.Position = UDim2.new(1, -38, 0.5, -13)
+    collapse_button.Size = UDim2.new(0, 22, 0, 22)
+    collapse_button.Position = UDim2.new(1, -32, 0.5, -11)
     collapse_button.Parent = top_bar
-    round(collapse_button, 7)
+    round(collapse_button, 6)
 
     local divider = Instance.new("Frame")
     divider.Size = UDim2.new(1, 0, 0, 1)
@@ -140,11 +154,17 @@ return function(settings)
     divider.Parent = main_frame
 
     -- body
-    local body = Instance.new("Frame")
+    local body = Instance.new("ScrollingFrame")
     body.Name = "body"
     body.Position = UDim2.new(0, 0, 0, top_bar_height)
     body.Size = UDim2.new(1, 0, 1, -top_bar_height)
     body.BackgroundTransparency = 1
+    body.BorderSizePixel = 0
+    body.ScrollBarThickness = 3
+    body.ScrollBarImageColor3 = theme.off
+    body.ScrollingDirection = Enum.ScrollingDirection.Y
+    body.CanvasSize = UDim2.new(0, 0, 0, 0)
+    body.AutomaticCanvasSize = Enum.AutomaticSize.Y
     body.Parent = main_frame
 
     local body_inset = Instance.new("UIPadding")
@@ -155,7 +175,7 @@ return function(settings)
     body_inset.Parent = body
 
     local body_layout = Instance.new("UIListLayout")
-    body_layout.Padding = UDim.new(0, 10)
+    body_layout.Padding = UDim.new(0, body_gap)
     body_layout.SortOrder = Enum.SortOrder.LayoutOrder
     body_layout.Parent = body
 
@@ -169,8 +189,16 @@ return function(settings)
     local is_collapsed = false
     local body_height = 0
 
+    local function get_max_window_height()
+        local camera = workspace.CurrentCamera
+        local viewport_height = camera and camera.ViewportSize.Y or 720
+
+        return math.max(160, viewport_height * max_height_ratio / gui_scale)
+    end
+
     local function resize_window(animate)
-        local target_height = is_collapsed and top_bar_height or (top_bar_height + body_height)
+        local full_height = top_bar_height + body_height
+        local target_height = is_collapsed and top_bar_height or math.min(full_height, get_max_window_height())
         local target_size = UDim2.new(0, window_width, 0, target_height)
 
         if animate then
@@ -185,6 +213,13 @@ return function(settings)
         resize_window(false)
     end)
 
+    local current_camera = workspace.CurrentCamera
+    if current_camera then
+        current_camera:GetPropertyChangedSignal("ViewportSize"):Connect(function()
+            resize_window(false)
+        end)
+    end
+
     -- refreshers: every control registers one, so loading a config updates the whole gui
     local refreshers = {}
 
@@ -194,65 +229,32 @@ return function(settings)
         end
     end
 
-    -- status (top bar)
+    -- status dot (top bar)
     local function set_status(is_on)
-        status_label.Text = is_on and "on" or "off"
-        status_label.TextColor3 = is_on and theme.accent or theme.muted
         accent_dot.BackgroundColor3 = is_on and theme.accent or theme.off
     end
 
     -- components
-    local function create_section(parent, title)
-        local header = Instance.new("Frame")
-        header.LayoutOrder = next_order()
-        header.Size = UDim2.new(1, 0, 0, 14)
-        header.BackgroundTransparency = 1
-        header.Parent = parent
-
-        local text_width = text_service:GetTextSize(title, 11, Enum.Font.GothamBold, Vector2.new(200, 14)).X
-
-        local section_label = make_label(header, title, 11, theme.muted, Enum.Font.GothamBold)
-        section_label.Size = UDim2.new(0, text_width + 2, 1, 0)
-
-        local line = Instance.new("Frame")
-        line.AnchorPoint = Vector2.new(0, 0.5)
-        line.Position = UDim2.new(0, text_width + 10, 0.5, 0)
-        line.Size = UDim2.new(1, -(text_width + 10), 0, 1)
-        line.BackgroundColor3 = theme.outline
-        line.BorderSizePixel = 0
-        line.Parent = header
-    end
-
-    local function create_toggle_row(parent, label_text, setting_key, on_change)
-        local row = Instance.new("Frame")
-        row.LayoutOrder = next_order()
-        row.Size = UDim2.new(1, 0, 0, 28)
-        row.BackgroundTransparency = 1
-        row.Parent = parent
-
-        local row_label = make_label(row, label_text, 13, theme.text)
-        row_label.Size = UDim2.new(1, -52, 1, 0)
-
+    local function make_switch(parent, setting_key, on_change)
         local track = Instance.new("TextButton")
         track.AutoButtonColor = false
         track.Text = ""
-        track.Size = UDim2.new(0, 42, 0, 22)
-        track.Position = UDim2.new(1, -42, 0.5, -11)
+        track.Size = UDim2.new(0, 34, 0, 18)
         track.BorderSizePixel = 0
-        track.Parent = row
-        round(track, 11)
+        track.Parent = parent
+        round(track, 9)
 
         local knob = Instance.new("Frame")
-        knob.Size = UDim2.new(0, 16, 0, 16)
+        knob.Size = UDim2.new(0, 12, 0, 12)
         knob.BackgroundColor3 = theme.white
         knob.BorderSizePixel = 0
         knob.Parent = track
-        round(knob, 8)
+        round(knob, 6)
 
         local function refresh(animate)
             local is_on = settings[setting_key] and true or false
             local track_color = is_on and theme.accent or theme.off
-            local knob_position = is_on and UDim2.new(1, -19, 0.5, -8) or UDim2.new(0, 3, 0.5, -8)
+            local knob_position = is_on and UDim2.new(1, -15, 0.5, -6) or UDim2.new(0, 3, 0.5, -6)
 
             if animate then
                 tween_service:Create(track, fast_tween, {BackgroundColor3 = track_color}):Play()
@@ -277,6 +279,28 @@ return function(settings)
         end)
 
         refresh(false)
+        return track
+    end
+
+    local function create_section(parent, title)
+        local header = Instance.new("Frame")
+        header.LayoutOrder = next_order()
+        header.Size = UDim2.new(1, 0, 0, 12)
+        header.BackgroundTransparency = 1
+        header.Parent = parent
+
+        local text_width = text_service:GetTextSize(title, 11, Enum.Font.GothamBold, Vector2.new(200, 12)).X
+
+        local section_label = make_label(header, title, 11, theme.muted, Enum.Font.GothamBold)
+        section_label.Size = UDim2.new(0, text_width + 2, 1, 0)
+
+        local line = Instance.new("Frame")
+        line.AnchorPoint = Vector2.new(0, 0.5)
+        line.Position = UDim2.new(0, text_width + 10, 0.5, 0)
+        line.Size = UDim2.new(1, -(text_width + 10), 0, 1)
+        line.BackgroundColor3 = theme.outline
+        line.BorderSizePixel = 0
+        line.Parent = header
     end
 
     local function create_grid(parent, row_count, column_count)
@@ -284,55 +308,66 @@ return function(settings)
 
         local grid = Instance.new("Frame")
         grid.LayoutOrder = next_order()
-        grid.Size = UDim2.new(1, 0, 0, row_count * 50 + (row_count - 1) * 8)
+        grid.Size = UDim2.new(1, 0, 0, row_count * cell_height + (row_count - 1) * cell_gap)
         grid.BackgroundTransparency = 1
         grid.Parent = parent
 
+        -- a little slack so the last column never wraps to a new row
+        local slack = column_count > 2 and 1 or 0
+        local cell_offset = -(math.ceil((column_count - 1) * cell_gap / column_count) + slack)
+
         local grid_layout = Instance.new("UIGridLayout")
-        grid_layout.CellSize = UDim2.new(1 / column_count, -math.ceil((column_count - 1) * 8 / column_count), 0, 50)
-        grid_layout.CellPadding = UDim2.new(0, 8, 0, 8)
+        grid_layout.CellSize = UDim2.new(1 / column_count, cell_offset, 0, cell_height)
+        grid_layout.CellPadding = UDim2.new(0, cell_gap, 0, cell_gap)
         grid_layout.SortOrder = Enum.SortOrder.LayoutOrder
         grid_layout.Parent = grid
 
         return grid
     end
 
-    -- a card with a small label and a text input
-    local function create_cell(parent, label_text, initial_text)
-        local cell = Instance.new("Frame")
-        cell.LayoutOrder = next_order()
-        cell.BackgroundColor3 = theme.panel
-        cell.BorderSizePixel = 0
-        cell.Parent = parent
-        round(cell, 8)
-        local cell_outline = outline(cell, theme.outline, 1)
+    -- a card with a small label on top
+    local function create_card(parent, label_text)
+        local card = Instance.new("Frame")
+        card.LayoutOrder = next_order()
+        card.BackgroundColor3 = theme.panel
+        card.BorderSizePixel = 0
+        card.Parent = parent
+        round(card, 8)
+        local card_outline = outline(card, theme.outline, 1)
 
-        local cell_label = make_label(cell, label_text, 11, theme.muted)
-        cell_label.Size = UDim2.new(1, -20, 0, 14)
-        cell_label.Position = UDim2.new(0, 10, 0, 7)
+        local card_label = make_label(card, label_text, 11, theme.muted)
+        card_label.Size = UDim2.new(1, -16, 0, 14)
+        card_label.Position = UDim2.new(0, 8, 0, 4)
+
+        return card, card_label, card_outline
+    end
+
+    -- a card with a text input
+    local function create_cell(parent, label_text, initial_text)
+        local card, card_label, card_outline = create_card(parent, label_text)
 
         local input = Instance.new("TextBox")
         input.BackgroundTransparency = 1
-        input.Size = UDim2.new(1, -20, 0, 20)
-        input.Position = UDim2.new(0, 10, 0, 24)
+        input.Size = UDim2.new(1, -16, 0, 18)
+        input.Position = UDim2.new(0, 8, 0, 19)
         input.Text = initial_text
         input.TextColor3 = theme.text
         input.PlaceholderColor3 = theme.off
         input.Font = Enum.Font.GothamBold
-        input.TextSize = 15
+        input.TextSize = 14
         input.TextXAlignment = Enum.TextXAlignment.Left
         input.ClearTextOnFocus = false
-        input.Parent = cell
+        input.Parent = card
 
         input.Focused:Connect(function()
-            tween_service:Create(cell_outline, fast_tween, {Color = theme.accent}):Play()
+            tween_service:Create(card_outline, fast_tween, {Color = theme.accent}):Play()
         end)
 
         input.FocusLost:Connect(function()
-            tween_service:Create(cell_outline, fast_tween, {Color = theme.outline}):Play()
+            tween_service:Create(card_outline, fast_tween, {Color = theme.outline}):Play()
         end)
 
-        return cell_label, input
+        return card_label, input
     end
 
     -- a cell bound to a number in settings
@@ -375,16 +410,7 @@ return function(settings)
         return button
     end
 
-    -- pages and tabs
-    local tab_row = Instance.new("Frame")
-    tab_row.LayoutOrder = next_order()
-    tab_row.Size = UDim2.new(1, 0, 0, 28)
-    tab_row.BackgroundColor3 = theme.panel
-    tab_row.BorderSizePixel = 0
-    tab_row.Parent = body
-    round(tab_row, 8)
-    outline(tab_row, theme.outline, 1)
-
+    -- pages
     local function create_page()
         local page = Instance.new("Frame")
         page.LayoutOrder = next_order()
@@ -395,7 +421,7 @@ return function(settings)
         page.Parent = body
 
         local page_layout = Instance.new("UIListLayout")
-        page_layout.Padding = UDim.new(0, 10)
+        page_layout.Padding = UDim.new(0, body_gap)
         page_layout.SortOrder = Enum.SortOrder.LayoutOrder
         page_layout.Parent = page
 
@@ -405,10 +431,12 @@ return function(settings)
     local main_page = create_page()
     local config_page = create_page()
 
+    -- tabs (top bar)
     local pages = {main = main_page, configs = config_page}
     local tab_buttons = {}
 
     local function show_tab(tab_name)
+        body.CanvasPosition = Vector2.new(0, 0)
         for name, page in pairs(pages) do
             page.Visible = name == tab_name
         end
@@ -425,15 +453,15 @@ return function(settings)
         button.AutoButtonColor = false
         button.Text = tab_name
         button.Font = Enum.Font.GothamBold
-        button.TextSize = 12
+        button.TextSize = 11
         button.TextColor3 = theme.muted
         button.BackgroundColor3 = theme.accent
         button.BackgroundTransparency = 1
         button.BorderSizePixel = 0
-        button.Size = UDim2.new(0.5, -3, 1, -6)
-        button.Position = UDim2.new((index - 1) * 0.5, index == 1 and 3 or 0, 0, 3)
-        button.Parent = tab_row
-        round(button, 6)
+        button.Size = UDim2.new(0.5, -3, 1, -4)
+        button.Position = UDim2.new((index - 1) * 0.5, index == 1 and 2 or 1, 0, 2)
+        button.Parent = tab_segment
+        round(button, 5)
         tab_buttons[tab_name] = button
 
         button.MouseButton1Click:Connect(function()
@@ -441,29 +469,33 @@ return function(settings)
         end)
     end
 
+    -- master switch (top bar)
+    local enabled_switch = make_switch(top_bar, "enabled", set_status)
+    enabled_switch.Position = UDim2.new(1, -70, 0.5, -9)
+
     -- main page
     local accuracy_label
     local accuracy_input
 
-    create_toggle_row(main_page, "enabled", "enabled", set_status)
+    create_section(main_page, "settings")
 
-    -- mode row (segmented control)
-    local mode_row = Instance.new("Frame")
-    mode_row.LayoutOrder = next_order()
-    mode_row.Size = UDim2.new(1, 0, 0, 28)
-    mode_row.BackgroundTransparency = 1
-    mode_row.Parent = main_page
+    local settings_grid = create_grid(main_page, 2, 3)
+    create_field(settings_grid, "delay dash", "lethalDashDelay")
+    create_field(settings_grid, "delay jump", "lethalJumpDelay")
+    create_field(settings_grid, "velocity", "lethalJumpVelocity")
+    accuracy_label, accuracy_input = create_field(settings_grid, "accuracy", "lethalAccuracy")
+    create_field(settings_grid, "cancel", "lethalCancelDelay")
 
-    local mode_label = make_label(mode_row, "mode", 13, theme.text)
-    mode_label.Size = UDim2.new(1, -104, 1, 0)
+    -- mode card (segmented control)
+    local mode_card = create_card(settings_grid, "mode")
 
     local segment = Instance.new("Frame")
-    segment.Size = UDim2.new(0, 96, 0, 28)
-    segment.Position = UDim2.new(1, -96, 0, 0)
-    segment.BackgroundColor3 = theme.panel
+    segment.Size = UDim2.new(1, -16, 0, 18)
+    segment.Position = UDim2.new(0, 8, 0, 19)
+    segment.BackgroundColor3 = theme.background
     segment.BorderSizePixel = 0
-    segment.Parent = mode_row
-    round(segment, 8)
+    segment.Parent = mode_card
+    round(segment, 6)
     outline(segment, theme.outline, 1)
 
     local mode_buttons = {}
@@ -485,15 +517,15 @@ return function(settings)
         button.AutoButtonColor = false
         button.Text = string.lower(mode_name)
         button.Font = Enum.Font.GothamBold
-        button.TextSize = 12
+        button.TextSize = 11
         button.TextColor3 = theme.muted
         button.BackgroundColor3 = theme.accent
         button.BackgroundTransparency = 1
         button.BorderSizePixel = 0
-        button.Size = UDim2.new(0.5, -3, 1, -6)
-        button.Position = UDim2.new((index - 1) * 0.5, index == 1 and 3 or 0, 0, 3)
+        button.Size = UDim2.new(0.5, -3, 1, -4)
+        button.Position = UDim2.new((index - 1) * 0.5, index == 1 and 2 or 1, 0, 2)
         button.Parent = segment
-        round(button, 6)
+        round(button, 4)
         mode_buttons[mode_name] = button
 
         button.MouseButton1Click:Connect(function()
@@ -509,21 +541,15 @@ return function(settings)
 
     table.insert(refreshers, refresh_mode)
 
-    create_section(main_page, "settings")
-
-    local settings_grid = create_grid(main_page, 2)
-    create_field(settings_grid, "delay dash", "lethalDashDelay")
-    create_field(settings_grid, "delay jump", "lethalJumpDelay")
-    create_field(settings_grid, "velocity", "lethalJumpVelocity")
-    accuracy_label, accuracy_input = create_field(settings_grid, "accuracy", "lethalAccuracy")
-
-    local cancel_grid = create_grid(main_page, 1, 1)
-    create_field(cancel_grid, "cancel", "lethalCancelDelay")
-
+    -- camera
     create_section(main_page, "camera")
-    create_toggle_row(main_page, "cam smooth", "camSmooth")
 
-    local camera_grid = create_grid(main_page, 1)
+    local camera_grid = create_grid(main_page, 1, 3)
+
+    local cam_card = create_card(camera_grid, "cam smooth")
+    local cam_switch = make_switch(cam_card, "camSmooth")
+    cam_switch.Position = UDim2.new(0, 8, 0, 19)
+
     create_field(camera_grid, "cam delay", "camSmoothDelay")
     create_field(camera_grid, "cam time", "camDuration")
 
@@ -536,13 +562,13 @@ return function(settings)
 
     local button_row = Instance.new("Frame")
     button_row.LayoutOrder = next_order()
-    button_row.Size = UDim2.new(1, 0, 0, 30)
+    button_row.Size = UDim2.new(1, 0, 0, 28)
     button_row.BackgroundTransparency = 1
     button_row.Parent = config_page
 
     local button_layout = Instance.new("UIGridLayout")
-    button_layout.CellSize = UDim2.new(1 / 3, -6, 0, 30)
-    button_layout.CellPadding = UDim2.new(0, 8, 0, 0)
+    button_layout.CellSize = UDim2.new(1 / 3, -5, 0, 28)
+    button_layout.CellPadding = UDim2.new(0, cell_gap, 0, 0)
     button_layout.SortOrder = Enum.SortOrder.LayoutOrder
     button_layout.Parent = button_row
 
@@ -554,7 +580,7 @@ return function(settings)
 
     local config_list = Instance.new("ScrollingFrame")
     config_list.LayoutOrder = next_order()
-    config_list.Size = UDim2.new(1, 0, 0, 104)
+    config_list.Size = UDim2.new(1, 0, 0, 84)
     config_list.BackgroundColor3 = theme.panel
     config_list.BorderSizePixel = 0
     config_list.ScrollBarThickness = 3
@@ -579,7 +605,7 @@ return function(settings)
 
     local message_label = make_label(config_page, "", 11, theme.muted)
     message_label.LayoutOrder = next_order()
-    message_label.Size = UDim2.new(1, 0, 0, 14)
+    message_label.Size = UDim2.new(1, 0, 0, 12)
 
     -- config logic
     local message_token = 0
