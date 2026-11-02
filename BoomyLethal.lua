@@ -1,5 +1,5 @@
 -- Boommy Lethal Core
-local GUI_URL = "
+local GUI_URL = "https://raw.githubusercontent.com/m7za/tsb/refs/heads/main/BoomyLethalGui.lua"
 
 -- | Services | --
 local userInputService = game:GetService("UserInputService")
