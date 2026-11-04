@@ -436,7 +436,7 @@ table.insert(connections, localPlayer.CharacterAdded:Connect(setupCharacter))
 -- | Load GUI | --
 local success, result = pcall(function()
     local buildGui = loadstring(game:HttpGet(ui_url))()
-    return buildGui(settings)
+    return buildGui(settings, unload)
 end)
 
 if success then
