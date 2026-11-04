@@ -1,5 +1,5 @@
 -- | Magnet GUI | --
-return function(settings)
+return function(settings, on_close)
     local tween_service = game:GetService("TweenService")
     local text_service = game:GetService("TextService")
     local user_input_service = game:GetService("UserInputService")
@@ -35,6 +35,7 @@ return function(settings)
         and listfiles and isfile and delfile
 
     local theme = {
+        danger = Color3.fromRBG(255, 85, 100),
         background = Color3.fromRGB(16, 16, 21),
         panel = Color3.fromRGB(24, 24, 31),
         outline = Color3.fromRGB(44, 44, 56),
@@ -216,11 +217,15 @@ return function(settings)
     end)
 
     local current_camera = workspace.CurrentCamera
-    if current_camera then
-        current_camera:GetPropertyChangedSignal("ViewportSize"):Connect(function()
-            resize_window(false)
-        end)
-    end
+if current_camera then
+    local camera_connection = current_camera:GetPropertyChangedSignal("ViewportSize"):Connect(function()
+        resize_window(false)
+    end)
+
+    screen_gui.Destroying:Connect(function()
+        camera_connection:Disconnect()
+    end)
+end
 
     -- | Refreshers: every control registers one, so loading a config updates the whole gui | --
     local refreshers = {}
@@ -767,6 +772,88 @@ return function(settings)
         resize_window(true)
     end)
 
+-- | delete the GUI | --
+local confirm_text = "Are you sure you wanna delete the script?"
+local confirm_hint = "click x again to confirm"
+local confirm_timeout = 3
+
+-- | The collapse button moves left to make room | --
+collapse_button.Position = UDim2.new(1, -58, 0.5, -11)
+
+local close_button = Instance.new("TextButton")
+close_button.AutoButtonColor = false
+close_button.Text = "x"
+close_button.Font = Enum.Font.GothamBold
+close_button.TextSize = 13
+close_button.TextColor3 = theme.muted
+close_button.BackgroundColor3 = theme.panel
+close_button.BorderSizePixel = 0
+close_button.Size = UDim2.new(0, 22, 0, 22)
+close_button.Position = UDim2.new(1, -32, 0.5, -11)
+close_button.Parent = top_bar
+round(close_button, 6)
+
+local toast_width = text_service:GetTextSize(confirm_text, 12, Enum.Font.GothamBold, Vector2.new(1000, 16)).X + 28
+local toast_shown = UDim2.new(0.5, 0, 1, -24)
+local toast_hidden = UDim2.new(0.5, 0, 1, 80)
+
+local toast = Instance.new("Frame")
+toast.AnchorPoint = Vector2.new(0.5, 1)
+toast.Position = toast_hidden
+toast.Size = UDim2.new(0, toast_width, 0, 46)
+toast.BackgroundColor3 = theme.background
+toast.BorderSizePixel = 0
+toast.Parent = screen_gui
+round(toast, 10)
+outline(toast, theme.danger, 1)
+
+local toast_title = make_label(toast, confirm_text, 12, theme.text, Enum.Font.GothamBold)
+toast_title.Size = UDim2.new(1, -28, 0, 16)
+toast_title.Position = UDim2.new(0, 14, 0, 7)
+
+local toast_hint = make_label(toast, confirm_hint, 11, theme.muted)
+toast_hint.Size = UDim2.new(1, -28, 0, 14)
+toast_hint.Position = UDim2.new(0, 14, 0, 25)
+
+local is_confirming = false
+local confirm_token = 0
+
+local function set_confirming(state)
+    is_confirming = state
+
+    tween_service:Create(close_button, fast_tween, {
+        BackgroundColor3 = state and theme.danger or theme.panel,
+        TextColor3 = state and theme.white or theme.muted
+    }):Play()
+
+    tween_service:Create(toast, slow_tween, {
+        Position = state and toast_shown or toast_hidden
+    }):Play()
+end
+
+close_button.MouseButton1Click:Connect(function()
+    confirm_token = confirm_token + 1
+
+    -- | Second click: delete everything | --
+    if is_confirming then
+        if on_close then
+            pcall(on_close)
+        end
+        screen_gui:Destroy()
+        return
+    end
+
+    -- | First click: ask, then reset after a few seconds | --
+    set_confirming(true)
+
+    local token = confirm_token
+    task.delay(confirm_timeout, function()
+        if token == confirm_token and is_confirming then
+            set_confirming(false)
+        end
+    end)
+end)
+
     -- | Dragging (top bar) | --
     local is_dragging = false
     local drag_start = Vector2.new(0, 0)
@@ -787,7 +874,7 @@ return function(settings)
         end
     end)
 
-    user_input_service.InputChanged:Connect(function(input)
+        local drag_connection = user_input_service.InputChanged:Connect(function(input)
         if not is_dragging then return end
 
         local input_type = input.UserInputType
@@ -801,6 +888,9 @@ return function(settings)
                 start_position.Y.Offset + delta.Y
             )
         end
+    end)
+    screen_gui.Destroying:Connect(function()
+        drag_connection:Disconnect()
     end)
 
     return screen_gui
