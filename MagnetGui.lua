@@ -213,19 +213,12 @@ return function(settings, on_close)
         end
     end
 
-    -- | The window is as tall as the tallest page, so switching tabs never changes its height | --
-local page_heights = {}
+    -- | Both pages share one fixed height (the taller one), so switching tabs never changes the window | --
+local main_page_height = 34 + 34 + 12 + (cell_height * 2 + cell_gap) + body_gap * 3
+local config_page_height = cell_height + 28 + 12 + 84 + 12 + body_gap * 4
 
-local function update_body_height()
-    local tallest = 0
-    for _, height in pairs(page_heights) do
-        tallest = math.max(tallest, height)
-    end
-
-    body_height = tallest + body_padding * 2
-    resize_window(false)
-end
-
+body_height = math.max(main_page_height, config_page_height) + body_padding * 2
+resize_window(false)
 
     local current_camera = workspace.CurrentCamera
 if current_camera then
@@ -460,13 +453,6 @@ end
     page_layout.Padding = UDim.new(0, body_gap)
     page_layout.SortOrder = Enum.SortOrder.LayoutOrder
     page_layout.Parent = page
-
-    page_heights[page_layout] = page_layout.AbsoluteContentSize.Y
-
-    page_layout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
-        page_heights[page_layout] = page_layout.AbsoluteContentSize.Y
-        update_body_height()
-    end)
 
     return page
 end
