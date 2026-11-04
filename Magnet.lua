@@ -1,4 +1,5 @@
 -- | Magnet by Techinified | --
+local ui_url = "https://raw.githubusercontent.com/m7za/tsb/refs/heads/main/MagnetGui.lua"
 
 -- | Services | --
 local players = game:GetService("Players")
@@ -433,7 +434,6 @@ end
 table.insert(connections, localPlayer.CharacterAdded:Connect(setupCharacter))
 
 -- | Load GUI | --
-local ui_url = "https://raw.githubusercontent.com/m7za/tsb/refs/heads/main/MagnetGui.lua"
 local success, result = pcall(function()
     local buildGui = loadstring(game:HttpGet(ui_url))()
     return buildGui(settings)
