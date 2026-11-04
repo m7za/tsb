@@ -22,6 +22,7 @@ if env.MagnetTechinifiedUnload then
 end
 
 -- | Constants | --
+local DASH_COOLDOWN = 5
 local DASH_ANIMATION_IDS = { "10479335397", "13380255751" }
 local UPPERCUT_ANIMATION_ID = "10503381238"
 local DASH_DETECT_OFFSET = 0.05
@@ -35,10 +36,11 @@ local CANCEL_TIMEOUT = 1.5
 -- | Settings | --
 local settings = {
     enabled = true,
-    dashDelay = 0.20, 
-    magnetDelay = 0.24,
-    magnetDuration = 0.20,
-    cancelDelay = 0.55
+    dashCooldown = true,
+    dashDelay = 0.24,
+    magnetDelay = 0.245,
+    magnetDuration = 0.21,
+    cancelDelay = 0.45
 }
 
 -- | State | --
@@ -60,6 +62,7 @@ local magnetPending = false
 
 local npcList = {}
 local lastNpcUpdate = 0
+local lastDashTime = -math.huge
 
 -- | NPC Cache | --
 local function updateNpcCache()
@@ -157,7 +160,7 @@ local function forceCancel()
     rootPart.AssemblyLinearVelocity = Vector3.new(0, 0, 0)
 end
 
--- | Cancel Watcher (counted from the dash) | --
+-- | Cancel Watcher | --
 local function startCancelWatcher()
     if cancelConnection then
         cancelConnection:Disconnect()
@@ -257,7 +260,7 @@ local function startMagnetPull()
     pullConnection = connection
 end
 
--- | Magnet Teleport (delay is counted from the dash) | --
+-- | Magnet Teleport | --
 local function runMagnet(currentSequence)
     if not rootPart or not character then return end
 
@@ -321,7 +324,13 @@ local function fireDash()
     end
 end
 
--- | Uppercut Detected: wait the dash delay, then dash | --
+-- | Is dash cooldown | --
+local function isDashOnCooldown()
+    if not settings.dashCooldown then return false end
+    return os.clock() - lastDashTime < DASH_COOLDOWN
+end
+
+-- | Uppercut | --
 local function onUppercut()
     if not settings.enabled or dashPending then return end
 
@@ -332,7 +341,7 @@ local function onUppercut()
     if currentSequence ~= sequenceId then return end
 
     dashPending = false
-    if settings.enabled then
+    if settings.enabled and not isDashOnCooldown() then
         fireDash()
     end
 end
@@ -360,6 +369,7 @@ local function setupCharacter(newCharacter)
     rootPart = newCharacter:WaitForChild("HumanoidRootPart", 10)
     humanoid = newCharacter:WaitForChild("Humanoid", 10)
     dashVelocity = nil
+    lastDashTime = -math.huge
     abortSequences()
 
     if animConnection then
@@ -389,6 +399,7 @@ local function setupCharacter(newCharacter)
         if isUppercutAnimation(animationTrack) then
             onUppercut()
         elseif isDashAnimation(animationId) then
+            lastDashTime = os.clock()
             local currentSequence = sequenceId
             task.wait(DASH_DETECT_OFFSET)
             if currentSequence ~= sequenceId then return end
