@@ -35,7 +35,7 @@ return function(settings, on_close)
         and listfiles and isfile and delfile
 
     local theme = {
-        danger = Color3.fromRBG(255, 85, 100),
+        danger = Color3.fromRGB(255, 85, 100),
         background = Color3.fromRGB(16, 16, 21),
         panel = Color3.fromRGB(24, 24, 31),
         outline = Color3.fromRGB(44, 44, 56),
