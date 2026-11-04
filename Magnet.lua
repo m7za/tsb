@@ -433,9 +433,9 @@ end
 table.insert(connections, localPlayer.CharacterAdded:Connect(setupCharacter))
 
 -- | Load GUI | --
-local gui_url = ""
+local ui_url = "https://raw.githubusercontent.com/m7za/tsb/refs/heads/main/MagnetGui.lua"
 local success, result = pcall(function()
-    local buildGui = loadstring(game:HttpGet(gui_url))()
+    local buildGui = loadstring(game:HttpGet(ui_url))()
     return buildGui(settings)
 end)
 
