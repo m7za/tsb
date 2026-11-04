@@ -34,10 +34,10 @@ local CANCEL_TIMEOUT = 1.5
 -- | Settings | --
 local settings = {
     enabled = true,
-    dashDelay = 0.20, -- | seconds after the uppercut animation starts until the dash | --
-    magnetDelay = 0.24, -- | seconds after the dash until the magnet teleport | --
-    magnetDuration = 0.20, -- | seconds the magnet pull lasts | --
-    cancelDelay = 0.55 -- | seconds after the dash until the cancel | --
+    dashDelay = 0.20, 
+    magnetDelay = 0.24,
+    magnetDuration = 0.20,
+    cancelDelay = 0.55
 }
 
 -- | State | --
