@@ -14,6 +14,7 @@ return function(settings, on_close)
     local body_gap = 8
     local cell_height = 40
     local cell_gap = 6
+    local gui_font = Enum.Font.Jura
 
     -- | Overall size of the window (1 = normal, lower = smaller) | --
     local gui_scale = 0.9
@@ -25,6 +26,7 @@ return function(settings, on_close)
 
     -- | Settings stored in a config (the master switch stays out) | --
     local config_keys = {
+        "dashCooldown",
         "dashDelay",
         "magnetDelay",
         "magnetDuration",
@@ -72,7 +74,7 @@ return function(settings, on_close)
         label.Text = text
         label.TextSize = size
         label.TextColor3 = color
-        label.Font = font or Enum.Font.GothamMedium
+        label.Font = font or gui_font
         label.TextXAlignment = Enum.TextXAlignment.Left
         label.Parent = parent
         return label
@@ -122,7 +124,7 @@ return function(settings, on_close)
     accent_dot.Parent = top_bar
     round(accent_dot, 4)
 
-    local title_label = make_label(top_bar, 'Magnet <font color="#808090">by</font> Techinified', 12, theme.text, Enum.Font.GothamBold)
+    local title_label = make_label(top_bar, 'Magnet <font color="#808090">by</font> Techinified', 12, theme.text, gui_font)
     title_label.RichText = true
     title_label.Size = UDim2.new(0, 144, 1, 0)
     title_label.Position = UDim2.new(0, 26, 0, 0)
@@ -139,7 +141,7 @@ return function(settings, on_close)
     local collapse_button = Instance.new("TextButton")
     collapse_button.AutoButtonColor = false
     collapse_button.Text = "-"
-    collapse_button.Font = Enum.Font.GothamBold
+    collapse_button.Font = gui_font
     collapse_button.TextSize = 14
     collapse_button.TextColor3 = theme.muted
     collapse_button.BackgroundColor3 = theme.panel
@@ -188,7 +190,7 @@ return function(settings, on_close)
         return layout_counter
     end
 
-    -- | Auto height: the window follows the visible page | --
+    -- | Auto height | --
     local is_collapsed = false
     local body_height = 0
 
@@ -211,10 +213,19 @@ return function(settings, on_close)
         end
     end
 
-    body_layout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
-        body_height = body_layout.AbsoluteContentSize.Y + body_padding * 2
-        resize_window(false)
-    end)
+    -- | The window is as tall as the tallest page, so switching tabs never changes its height | --
+local page_heights = {}
+
+local function update_body_height()
+    local tallest = 0
+    for _, height in pairs(page_heights) do
+        tallest = math.max(tallest, height)
+    end
+
+    body_height = tallest + body_padding * 2
+    resize_window(false)
+end
+
 
     local current_camera = workspace.CurrentCamera
 if current_camera then
@@ -296,9 +307,9 @@ end
         header.BackgroundTransparency = 1
         header.Parent = parent
 
-        local text_width = text_service:GetTextSize(title, 11, Enum.Font.GothamBold, Vector2.new(200, 12)).X
+        local text_width = text_service:GetTextSize(title, 11, gui_font, Vector2.new(200, 12)).X
 
-        local section_label = make_label(header, title, 11, theme.muted, Enum.Font.GothamBold)
+        local section_label = make_label(header, title, 11, theme.muted, gui_font)
         section_label.Size = UDim2.new(0, text_width + 2, 1, 0)
 
         local line = Instance.new("Frame")
@@ -360,7 +371,7 @@ end
         input.Text = initial_text
         input.TextColor3 = theme.text
         input.PlaceholderColor3 = theme.off
-        input.Font = Enum.Font.GothamBold
+        input.Font = gui_font
         input.TextSize = 14
         input.TextXAlignment = Enum.TextXAlignment.Left
         input.ClearTextOnFocus = false
@@ -401,7 +412,7 @@ end
         button.LayoutOrder = next_order()
         button.AutoButtonColor = false
         button.Text = text
-        button.Font = Enum.Font.GothamBold
+        button.Font = gui_font
         button.TextSize = 12
         button.TextColor3 = is_primary and theme.white or theme.text
         button.BackgroundColor3 = is_primary and theme.accent or theme.panel
@@ -435,26 +446,30 @@ end
         return row
     end
 
-    -- | Pages | --
+    -- | Page | --
     local function create_page()
-        local page = Instance.new("Frame")
-        page.LayoutOrder = next_order()
-        page.Size = UDim2.new(1, 0, 0, 0)
-        page.AutomaticSize = Enum.AutomaticSize.Y
-        page.BackgroundTransparency = 1
-        page.Visible = false
-        page.Parent = body
+    local page = Instance.new("Frame")
+    page.LayoutOrder = next_order()
+    page.Size = UDim2.new(1, 0, 0, 0)
+    page.AutomaticSize = Enum.AutomaticSize.Y
+    page.BackgroundTransparency = 1
+    page.Visible = false
+    page.Parent = body
 
-        local page_layout = Instance.new("UIListLayout")
-        page_layout.Padding = UDim.new(0, body_gap)
-        page_layout.SortOrder = Enum.SortOrder.LayoutOrder
-        page_layout.Parent = page
+    local page_layout = Instance.new("UIListLayout")
+    page_layout.Padding = UDim.new(0, body_gap)
+    page_layout.SortOrder = Enum.SortOrder.LayoutOrder
+    page_layout.Parent = page
 
-        return page
-    end
+    page_heights[page_layout] = page_layout.AbsoluteContentSize.Y
 
-    local main_page = create_page()
-    local config_page = create_page()
+    page_layout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+        page_heights[page_layout] = page_layout.AbsoluteContentSize.Y
+        update_body_height()
+    end)
+
+    return page
+end
 
     -- | Tabs (top bar) | --
     local pages = {main = main_page, configs = config_page}
@@ -477,7 +492,7 @@ end
         local button = Instance.new("TextButton")
         button.AutoButtonColor = false
         button.Text = tab_name
-        button.Font = Enum.Font.GothamBold
+        button.Font = gui_font
         button.TextSize = 11
         button.TextColor3 = theme.muted
         button.BackgroundColor3 = theme.accent
@@ -495,22 +510,28 @@ end
     end
 
     -- | Main page | --
-    local enabled_card = Instance.new("Frame")
-    enabled_card.LayoutOrder = next_order()
-    enabled_card.Size = UDim2.new(1, 0, 0, 34)
-    enabled_card.BackgroundColor3 = theme.panel
-    enabled_card.BorderSizePixel = 0
-    enabled_card.Parent = main_page
-    round(enabled_card, 8)
-    outline(enabled_card, theme.outline, 1)
+    local function create_toggle_card(parent, label_text, setting_key, on_change)
+    local card = Instance.new("Frame")
+    card.LayoutOrder = next_order()
+    card.Size = UDim2.new(1, 0, 0, 34)
+    card.BackgroundColor3 = theme.panel
+    card.BorderSizePixel = 0
+    card.Parent = parent
+    round(card, 8)
+    outline(card, theme.outline, 1)
 
-    local enabled_label = make_label(enabled_card, "enabled", 15, theme.text, Enum.Font.GothamBold)
-    enabled_label.Size = UDim2.new(1, -70, 1, 0)
-    enabled_label.Position = UDim2.new(0, 12, 0, 0)
+    local card_title = make_label(card, label_text, 15, theme.text, gui_font)
+    card_title.Size = UDim2.new(1, -70, 1, 0)
+    card_title.Position = UDim2.new(0, 12, 0, 0)
 
-    local enabled_card_switch = make_switch(enabled_card, "enabled", set_status)
-    enabled_card_switch.Position = UDim2.new(1, -46, 0.5, -9)
+    local card_switch = make_switch(card, setting_key, on_change)
+    card_switch.Position = UDim2.new(1, -46, 0.5, -9)
 
+    return card
+end
+
+    create_toggle_card(main_page, "enabled", "enabled", set_status)
+    create_toggle_card(main_page, "dash cooldown", "dashCooldown")
     create_section(main_page, "settings")
 
     local settings_grid = create_grid(main_page, 2, 2)
@@ -643,7 +664,7 @@ end
             item.BorderSizePixel = 0
             item.Text = "  " .. config_name
             item.TextXAlignment = Enum.TextXAlignment.Left
-            item.Font = Enum.Font.GothamMedium
+            item.Font = gui_font
             item.TextSize = 12
             item.TextColor3 = is_selected and theme.text or theme.muted
             item.Parent = config_list
@@ -783,7 +804,7 @@ collapse_button.Position = UDim2.new(1, -58, 0.5, -11)
 local close_button = Instance.new("TextButton")
 close_button.AutoButtonColor = false
 close_button.Text = "x"
-close_button.Font = Enum.Font.GothamBold
+close_button.Font = gui_font
 close_button.TextSize = 13
 close_button.TextColor3 = theme.muted
 close_button.BackgroundColor3 = theme.panel
@@ -793,7 +814,7 @@ close_button.Position = UDim2.new(1, -32, 0.5, -11)
 close_button.Parent = top_bar
 round(close_button, 6)
 
-local toast_width = text_service:GetTextSize(confirm_text, 12, Enum.Font.GothamBold, Vector2.new(1000, 16)).X + 28
+local toast_width = text_service:GetTextSize(confirm_text, 12, gui_font, Vector2.new(1000, 16)).X + 28
 local toast_shown = UDim2.new(0.5, 0, 1, -24)
 local toast_hidden = UDim2.new(0.5, 0, 1, 80)
 
@@ -807,7 +828,7 @@ toast.Parent = screen_gui
 round(toast, 10)
 outline(toast, theme.danger, 1)
 
-local toast_title = make_label(toast, confirm_text, 12, theme.text, Enum.Font.GothamBold)
+local toast_title = make_label(toast, confirm_text, 12, theme.text, gui_font)
 toast_title.Size = UDim2.new(1, -28, 0, 16)
 toast_title.Position = UDim2.new(0, 14, 0, 7)
 
