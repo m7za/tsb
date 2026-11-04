@@ -457,6 +457,9 @@ end
     return page
 end
 
+local main_page = create_page()
+local config_page = create_page()
+
     -- | Tabs (top bar) | --
     local pages = {main = main_page, configs = config_page}
     local tab_buttons = {}
