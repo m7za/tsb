@@ -8,7 +8,7 @@ local boosted_fps_cap = 999
 local default_fps_cap = 60
 
 local thrown_rules = {
-    { path = "Thrown", mode = "destroy", children = true },
+    { path = "Thrown", mode = "visual", children = true },
 }
 
 local map_decor_rules = {
@@ -593,7 +593,7 @@ end
 local function boost_performance(session)
     local fps_cap_setter = setfpscap or set_fps_cap
     if type(fps_cap_setter) == "function" then
-        pcall(fps_cap_setter, boosted_fps_cap)
+        pcall(fps_cap_setter, 9999)
         session:on_close(function()
             pcall(fps_cap_setter, default_fps_cap)
         end)
