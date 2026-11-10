@@ -4,7 +4,6 @@ local workspace = game:GetService("Workspace")
 local terrain = workspace.Terrain
 local environment = getgenv and getgenv() or _G
 
-local sweep_budget = 0.002
 local boosted_fps_cap = 999
 local default_fps_cap = 60
 
@@ -23,20 +22,18 @@ local map_decor_rules = {
 }
 
 local disabled = { Enabled = false }
-local no_size = NumberSequence.new(0)
-local fully_transparent = NumberSequence.new(1)
 
 local vfx_overrides = {
     ParticleEmitter = {
         Enabled = false,
         Rate = 0,
         Lifetime = NumberRange.new(0, 0),
-        Size = no_size,
-        Transparency = fully_transparent,
+        Size = NumberSequence.new(0),
+        Transparency = NumberSequence.new(1),
     },
     Smoke = { Enabled = false, Opacity = 0 },
-    Trail = { Enabled = false, Transparency = fully_transparent },
-    Beam = { Enabled = false, Transparency = fully_transparent, Width0 = 0, Width1 = 0 },
+    Trail = { Enabled = false, Transparency = NumberSequence.new(1) },
+    Beam = { Enabled = false, Transparency = NumberSequence.new(1), Width0 = 0, Width1 = 0 },
     Explosion = { Visible = false },
     ForceField = { Visible = false },
     Fire = disabled,
@@ -221,7 +218,7 @@ function override_store.release(owner)
         return
     end
 
-    local throttle = create_throttle(sweep_budget)
+    local throttle = create_throttle(0.002)
     for instance, properties in pairs(claims) do
         local saved = original_values[instance]
         for property in pairs(properties) do
@@ -369,7 +366,7 @@ function feature_class:set_enabled(enabled)
 end
 
 local function for_each_descendant(session, root, handler)
-    local throttle = create_throttle(sweep_budget)
+    local throttle = create_throttle(0.002)
     for _, descendant in ipairs(root:GetDescendants()) do
         if not session.active then
             return
