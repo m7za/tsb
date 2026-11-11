@@ -28,7 +28,7 @@ local function create_gui(settings, api)
     local user_input_service = game:GetService("UserInputService")
     local http_service = game:GetService("HttpService")
 
-    local gui_name = "hook_dash_by_techinified"
+    local gui_name = "hook_dash_by_dovi"
     local window_width = 250
     local top_bar_height = 34
     local tab_bar_height = 34
@@ -157,7 +157,7 @@ local function create_gui(settings, api)
     accent_dot.Parent = top_bar
     round(accent_dot, 4)
 
-    local title_label = make_label(top_bar, 'Hook Dash <font color="#808090">by</font> Techinified', 12, theme.text, gui_font)
+    local title_label = make_label(top_bar, 'Hook Dash <font color="#808090">by</font> Dovi', 12, theme.text, gui_font)
     title_label.RichText = true
     title_label.Size = UDim2.new(1, -90, 1, 0)
     title_label.Position = UDim2.new(0, 26, 0, 0)
