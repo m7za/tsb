@@ -19,7 +19,7 @@ if not game:IsLoaded() then
     game.Loaded:Wait()
 end
 
-local GUI_URL = ""
+local GUI_URL = "https://raw.githubusercontent.com/m7za/tsb/main/hookDashGui.lua"
 
 local Config = {
     Enabled = true,
