@@ -4,9 +4,6 @@ local workspace = game:GetService("Workspace")
 local terrain = workspace.Terrain
 local environment = getgenv and getgenv() or _G
 
-local boosted_fps_cap = 999
-local default_fps_cap = 60
-
 local thrown_rules = {
     { path = "Thrown", mode = "visual", children = true },
 }
@@ -595,7 +592,7 @@ local function boost_performance(session)
     if type(fps_cap_setter) == "function" then
         pcall(fps_cap_setter, 9999)
         session:on_close(function()
-            pcall(fps_cap_setter, default_fps_cap)
+            pcall(fps_cap_setter, 60)
         end)
     end
 
